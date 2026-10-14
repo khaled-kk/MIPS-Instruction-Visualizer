@@ -1,37 +1,50 @@
-# 💻 MIPS Instruction Visualizer
+# Single-Cycle MIPS Datapath in MyHDL
 
-[![Tech: Web-Based](https://img.shields.io/badge/Tech-JavaScript/HTML5-orange.svg)]()
-[![Field: Computer Architecture](https://img.shields.io/badge/Field-Computer--Architecture-blue.svg)]()
-[![Usage: Educational](https://img.shields.io/badge/Usage-Teaching--Tool-green.svg)]()
+A Google Colab notebook (`CA.ipynb`) that models a simplified single-cycle MIPS processor datapath in Python using [MyHDL](https://www.myhdl.org/), simulates it for 20 clock cycles, and plots the signal waveforms with `myhdlpeek`. Built for a Computer Architecture course.
 
-A high-fidelity, web-based MIPS simulator designed to bridge the gap between abstract assembly code and physical hardware execution. This tool provides a real-time visualization of the CPU pipeline, register states, and memory mapping.
+## What Is Implemented
 
-## 🎯 Educational Purpose
-This simulator was developed to help students visualize the **Fetch-Decode-Execute** cycle. It eliminates the "black box" of computer architecture by providing transparency into how instructions like `LW`, `SW`, `ADD`, and `BEQ` manipulate hardware state.
+Each datapath component is a MyHDL block:
 
-## ✨ Key Features
-*   **Real-Time Pipeline Visualization:** Watch instructions move through the data path.
-*   **Interactive Register File:** Monitor changes to `$t0-$t9`, `$s0-$s7`, etc., as code executes.
-*   **Memory Mapping:** Visual representation of the Data and Text segments.
-*   **Instruction Support:** Comprehensive support for R-type, I-type, and J-type MIPS instructions.
+| Block | Role |
+| :--- | :--- |
+| `pc` | Program counter, updated on the rising clock edge |
+| `add1` | PC + 1 |
+| `insmemory` | Instruction memory, loaded from `instructions2.txt` (first 22 lines) |
+| `decode` | Splits the 32-bit instruction into opcode, rs, rt, rd, immediate and funct fields |
+| `Control` | Main control unit producing RegDst, RegWrite, ALUSrc, ALUOp, MemWrite, MemRead, MemToReg, Branch |
+| `registers` | 32-entry register file, initial values loaded from `registerfile.txt` |
+| `signextend`, `shift` | Immediate pass-through and shift-left-by-2 for branch offsets |
+| `ALU` | ADD, SUB, AND, OR, XOR |
+| `add2` | Branch target adder |
+| `mux1`–`mux4` | Write-register, ALU-source, next-PC and write-back multiplexers |
+| `datamemory` | 100-word data memory |
 
-## 🛠 Technical Implementation
-The simulator emulates the MIPS 32-bit architecture logic:
-*   **ALU Logic:** Pure [Language, e.g., JavaScript] implementation of arithmetic and logical operations.
-*   **Control Unit:** Decodes OpCodes and Funct codes to set control signals (RegWrite, MemRead, etc.).
-*   **State Persistence:** Maintains a virtualized memory space and register set during execution.
+Instructions decoded by the control unit (codes as written in the notebook):
 
+- R-type (opcode 0): ADD (funct 32), SUB (34), AND (54), OR (55), XOR (56)
+- I-type: ADDI (opcode 8), SUBI (36), LW (35), SW (43), BEQ (4)
 
+A testbench toggles the clock 20 times, runs the simulation and attaches a `Peeker` to all 30 signals to draw a waveform plot (saved as an image in the notebook output).
 
-## 🚀 How to Use
-1. **Load Code:** Paste your MIPS assembly code into the editor.
-2. **Step Execution:** Use the "Step" button to execute one clock cycle at a time.
-3. **Analyze:** Observe the highlighted data paths and updated register values.
+## Known Limitations
 
-## 📂 Project Structure
-*   `/src/emulator`: The core logic for instruction decoding and execution.
-*   `/src/ui`: The visualization engine and interactive hardware components.
-*   `/examples`: Sample MIPS scripts (e.g., Fibonacci, Array Sorting).
+- Register write-back does not update the stored register array, and the ALU `zero` flag is assigned outside the combinational logic, so register writes and taken branches are not fully functional.
+- The input files are read from Google Drive (`/content/gdrive/MyDrive/`) and are **not included** in this repository.
+
+## Tech Stack
+
+- Python 3 on Google Colab
+- MyHDL 0.11, myhdlpeek 0.0.10
+
+## How to Run
+
+1. Open `CA.ipynb` in Google Colab.
+2. Upload to your Google Drive (`MyDrive/`):
+   - `instructions2.txt` – one 32-bit binary instruction per line (22 lines are read),
+   - `registerfile.txt` – 32 lines, one initial integer value per register.
+3. Run all cells; the drive mount cell will ask for authorization. The last cell runs the simulation and shows the waveforms.
 
 ---
-*Developed by Khaled Walid for the next generation of Computer Architects.*
+
+*Developed by Khaled Walid*
